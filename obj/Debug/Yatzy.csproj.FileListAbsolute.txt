@@ -1,0 +1,7 @@
+E:\Dropbox\projects\1806_Yatzy\Yatzy\bin\Debug\Yatzy.exe.config
+E:\Dropbox\projects\1806_Yatzy\Yatzy\bin\Debug\Yatzy.exe
+E:\Dropbox\projects\1806_Yatzy\Yatzy\bin\Debug\Yatzy.pdb
+E:\Dropbox\projects\1806_Yatzy\Yatzy\obj\Debug\Yatzy.csprojAssemblyReference.cache
+E:\Dropbox\projects\1806_Yatzy\Yatzy\obj\Debug\Yatzy.csproj.CoreCompileInputs.cache
+E:\Dropbox\projects\1806_Yatzy\Yatzy\obj\Debug\Yatzy.exe
+E:\Dropbox\projects\1806_Yatzy\Yatzy\obj\Debug\Yatzy.pdb
