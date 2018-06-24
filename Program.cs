@@ -6,51 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public class Player {
-    public string name;
-    public int id;
-    public Score[] scoreboard = new Score[] {
-        new Score ("Ones"),
-        new Score ("Twos"),
-        new Score ("Threes"),
-        new Score ("Fours"),
-        new Score ("Fives"),
-        new Score ("Sixes"),
-        new Score ("OnePair"),
-        new Score ("TwoPair"),
-        new Score ("Three of a kind"),
-        new Score ("Four o a kind"),
-        new Score ("Small straight"),
-        new Score ("Large straight"),
-        new Score ("Full house"),
-        new Score ("Chance"),
-        new Score ("Yatzy")
-    };
 
-    public Player(string _name) {
-        name = _name;
-    }
-
-    public bool isDone() {
-        foreach (Score score in scoreboard) {
-            if (!score.isScored) return false;
-        }
-        return true;
-    }
-
-}
-
-public class Score {
-    public string name;
-    public int val;
-    public bool isScored;
-
-    public Score(string _name) {
-        name = _name;
-        val = 0;
-        isScored = false;
-    }
-}
 
 namespace Yatzy {
     class Program {
@@ -69,6 +25,7 @@ namespace Yatzy {
 
                 //Starts a new player turn and goes through the rolling process
                 Player activePlayer = players[playerTurn];
+                Console.WriteLine("It is " + activePlayer.name + "s turn.");
                 lockedDice = lockAndRoll(activePlayer);
 
                 Array.Sort(lockedDice);
@@ -78,6 +35,8 @@ namespace Yatzy {
                     Console.WriteLine("X : " + val);
 
                 Console.WriteLine("");
+                Console.WriteLine(activePlayer.name + "s current scores are:");
+
                 PrintScoreboard(activePlayer);
 
                 //Choosing which category to score
@@ -88,6 +47,7 @@ namespace Yatzy {
                 string pressedKey;
                 int indexOfKey;
                 do {
+                    isValid = true;
                     Console.WriteLine("Which do you want to score (A-O)?");
                     pressedKey = Console.ReadKey().Key.ToString().ToLower();
                     indexOfKey = Array.IndexOf(letters, pressedKey);
@@ -96,7 +56,7 @@ namespace Yatzy {
                         Console.WriteLine(" is not a valid choice.");
                         isValid = false;
                     }
-                    if (activePlayer.scoreboard[indexOfKey].isScored) {
+                    else if (activePlayer.scoreboard[indexOfKey].isScored) {
                         Console.WriteLine(" is already scored.");
                         isValid = false;
                     }
@@ -190,10 +150,16 @@ namespace Yatzy {
                 //Set score variables
                 theScore.val = categoryScore;
                 theScore.isScored = true;
-                Console.WriteLine(activePlayer.name + "s score for category " + theScore.name + " is  " + theScore.val);
+                //Console.WriteLine(activePlayer.name + "s score for category " + theScore.name + " is  " + theScore.val);
+
+                Console.Clear();
+                Console.WriteLine(activePlayer.name + "s current scores are:");
+                PrintScoreboard(activePlayer);
                 Console.ReadKey();
 
-                //playerTurn = (playerTurn == players.Length - 1) ? playerTurn + 1 : playerTurn = 0; //Change playerturn
+
+
+                playerTurn = (playerTurn == players.Length - 1) ? 0 : playerTurn + 1; //Change playerturn
                 if (playerTurn == 0 && activePlayer.isDone()) {
                     gameOver = true;
                 }
@@ -201,7 +167,46 @@ namespace Yatzy {
             }
 
 
+            //Handle Gameover
+            foreach (Player player in players) {
+                Console.WriteLine(player.name + "s scores:");
+                PrintScoreboard(player);
+                Console.WriteLine("");
+            }
 
+            Console.WriteLine("The final scores are:");
+
+            Player[] winners = new Player[players.Length];
+            int winnerCount = 0;
+            winners[0] = players[0];
+            int maxScore = 0;
+            foreach (Player player in players) {
+                int playerScore = player.getTotalScore();
+                if (playerScore > winners[0].getTotalScore()) {
+                    winners[0] = player;
+                    winnerCount = 1;
+                    maxScore = playerScore;
+
+                }
+                else if (playerScore == winners[0].getTotalScore()) {
+                    winners[winnerCount] = player;
+                    winnerCount++;
+                }
+                Console.WriteLine(player.name + ": " + player.getTotalScore());
+            }
+
+            if (winnerCount == 1) {
+                Console.WriteLine("The winner is: " + winners[0].name);
+            }
+            else {
+                Console.WriteLine("It's a tie between: ");
+                for (int i = 0; i < winnerCount; i++) {
+                    Console.WriteLine(winners[i].name);
+
+                }
+            }
+            Console.WriteLine("Congratulations!");
+            Console.ReadKey();
         }
 
         private static int[] lockAndRoll(Player activePlayer) {
@@ -252,7 +257,6 @@ namespace Yatzy {
         }
 
         static void PrintScoreboard(Player player) {
-            Console.WriteLine(player.name + "s current scores are:");
             for (int i = 0; i < player.scoreboard.Length; i++) {
                 Score score = player.scoreboard[i];
                 string line = letters[i] + " [";
@@ -280,20 +284,20 @@ namespace Yatzy {
 
         static Player[] SetupPlayers() {
             //Real
-            //Console.WriteLine("How many players?");
-            //int playerCount = int.Parse(Console.ReadLine());
-            //Player[] players = new Player[playerCount];
-            //Console.WriteLine(playerCount);
-            //Console.ReadKey();
-            //for (int i = 0; i < playerCount; i++) {
-            //    Console.WriteLine("What is the name of player " + (i + 1) + "?");
-            //    string name = Console.ReadLine();
-            //    players[i] = new Player(name);
-            //}
-            //return players;
+            Console.WriteLine("How many players?");
+            int playerCount = int.Parse(Console.ReadLine());
+            Player[] players = new Player[playerCount];
+            Console.WriteLine(playerCount);
+            Console.ReadKey();
+            for (int i = 0; i < playerCount; i++) {
+                Console.WriteLine("What is the name of player " + (i + 1) + "?");
+                string name = Console.ReadLine();
+                players[i] = new Player(name);
+            }
+            return players;
 
-            //Debugtests
-            return new Player[] { new Player("Struten"), new Player("Braxen") };
+            ////Debugtests
+            //return new Player[] { new Player("Struten"), new Player("Braxen") };
         }
 
     }
