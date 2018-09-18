@@ -11,52 +11,44 @@ using System.Threading.Tasks;
 namespace Yatzy {
     class Program {
 
-        static string[] letters = new string[] { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o" };
+        static readonly string[] letters = new string[] { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o" };
+        public static Player[] players = SetupPlayers();
+        static int playerTurn = 0;
+        static Player activePlayer;
 
-        static void Main(string[] args) {
-            Player[] players = SetupPlayers();
-            int playerTurn = 0;
+
+        public static void Main(string[] args) {
             bool gameOver = false;
-
-            int[] lockedDice = new int[5];
 
             while (gameOver == false) {
                 Console.Clear();
 
                 //Starts a new player turn and goes through the rolling process
-                Player activePlayer = players[playerTurn];
-                Console.WriteLine("It is " + activePlayer.name + "s turn.");
-                lockedDice = lockAndRoll(activePlayer);
+                activePlayer = players[playerTurn];
+                Console.WriteLine($"It is {activePlayer.Name}s turn.");
 
-                Array.Sort(lockedDice);
-                Console.WriteLine("Your final dice are:");
-                Console.WriteLine("");
-                foreach (int val in lockedDice)
-                    Console.WriteLine("X : " + val);
-
-                Console.WriteLine("");
-                Console.WriteLine(activePlayer.name + "s current scores are:");
+                int[] lockedDice = LockAndRoll(activePlayer);
 
                 PrintScoreboard(activePlayer);
 
                 //Choosing which category to score
                 int categoryScore = 0;
-                Regex rgx = new Regex(@"[a-o]");
-                bool isMatch = false;
-                bool isValid = true;
+                Regex regexAtoO = new Regex(@"[a-o]");
+                bool isValid;
                 string pressedKey;
                 int indexOfKey;
                 do {
                     isValid = true;
-                    Console.WriteLine("Which do you want to score (A-O)?");
+                    Console.WriteLine("Which do you want to category (A-O)?");
                     pressedKey = Console.ReadKey().Key.ToString().ToLower();
                     indexOfKey = Array.IndexOf(letters, pressedKey);
-                    isMatch = rgx.IsMatch(pressedKey) && pressedKey.Length == 1;
+
+                    bool isMatch = regexAtoO.IsMatch(pressedKey) && pressedKey.Length == 1;
                     if (!isMatch) {
                         Console.WriteLine(" is not a valid choice.");
                         isValid = false;
                     }
-                    else if (activePlayer.scoreboard[indexOfKey].isScored) {
+                    else if (activePlayer.Scoreboard[indexOfKey].IsScored) {
                         Console.WriteLine(" is already scored.");
                         isValid = false;
                     }
@@ -64,11 +56,11 @@ namespace Yatzy {
 
                 //Calculate how many times every value occurs
                 Console.WriteLine("");
-                int[] occurences = new int[6];
+                int[] occurrences = new int[6];
                 foreach (int diceVal in lockedDice)
-                    occurences[diceVal - 1]++;
+                    occurrences[diceVal - 1]++;
 
-                //Calculate score of chosen category
+                //Calculate category of chosen category
                 switch (pressedKey) {
                     case "a":
                     case "b":
@@ -80,22 +72,20 @@ namespace Yatzy {
                         break;
                     case "g": //One Pair
                         for (int i = lockedDice.Length - 1; i > 0; i--) {
-                            if (lockedDice[i - 1] == lockedDice[i]) {
-                                categoryScore = lockedDice[i] * 2;
-                                break;
-                            }
+                            if (lockedDice[i - 1] != lockedDice[i]) continue;
+                            categoryScore = lockedDice[i] * 2;
+                            break;
                         }
                         break;
                     case "h": //Two Pair
                         int lastPair = 0;
                         for (int i = lockedDice.Length - 1; i > 0; i--) {
-                            if (lockedDice[i - 1] == lockedDice[i]) {
-                                if (lastPair == 0)
-                                    lastPair = lockedDice[i];
-                                else if (lastPair != lockedDice[i]) {
-                                    categoryScore = lockedDice[i] * 2 + lastPair * 2;
-                                    break;
-                                }
+                            if (lockedDice[i - 1] != lockedDice[i]) continue;
+                            if (lastPair == 0)
+                                lastPair = lockedDice[i];
+                            else if (lastPair != lockedDice[i]) {
+                                categoryScore = lockedDice[i] * 2 + lastPair * 2;
+                                break;
                             }
                         }
                         break;
@@ -103,11 +93,10 @@ namespace Yatzy {
                     case "j": //Four of a kind
                         int countNeed = Array.IndexOf(letters, pressedKey) - 5;
 
-                        for (int i = occurences.Length - 1; i >= 0; i--) {
-                            if (occurences[i] >= countNeed) {
-                                categoryScore = (i + 1) * countNeed;
-                                break;
-                            }
+                        for (int i = occurrences.Length - 1; i >= 0; i--) {
+                            if (occurrences[i] < countNeed) continue;
+                            categoryScore = (i + 1) * countNeed;
+                            break;
 
                         }
                         break;
@@ -116,17 +105,15 @@ namespace Yatzy {
                         bool isLarge = Array.IndexOf(letters, pressedKey) == 11;
                         categoryScore = 15 + Convert.ToInt32(isLarge) * 5;
                         for (int i = 0; i < lockedDice.Length; i++) {
-                            if (lockedDice[i] != i + 1 + Convert.ToInt32(isLarge)) {
-                                categoryScore = 0;
-                                break;
-
-                            }
+                            if (lockedDice[i] == i + 1 + Convert.ToInt32(isLarge)) continue;
+                            categoryScore = 0;
+                            break;
                         }
                         break;
                     case "m": //Full House
 
-                        Array.Sort(occurences);
-                        if (occurences[4] == 2 && occurences[5] == 3) {
+                        Array.Sort(occurrences);
+                        if (occurrences[4] == 2 && occurrences[5] == 3) {
                             categoryScore = lockedDice[4] * 3 + lockedDice[0] * 2;
                         }
                         break;
@@ -136,40 +123,43 @@ namespace Yatzy {
                     case "o": //Yatzy
                         categoryScore = 50;
                         for (int i = 1; i < lockedDice.Length; i++) {
-                            if (lockedDice[i] != lockedDice[0]) {
-                                categoryScore = 0;
-                                break;
-                            }
+                            if (lockedDice[i] == lockedDice[0]) continue;
+                            categoryScore = 0;
+                            break;
                         }
                         break;
                     default:
                         break;
                 }
-                Score theScore = activePlayer.scoreboard[indexOfKey];
+                Category categoryToCategory = activePlayer.Scoreboard[indexOfKey];
 
-                //Set score variables
-                theScore.val = categoryScore;
-                theScore.isScored = true;
-                //Console.WriteLine(activePlayer.name + "s score for category " + theScore.name + " is  " + theScore.val);
+                //Set category variables
+                categoryToCategory.Val = categoryScore;
+                categoryToCategory.IsScored = true;
 
                 Console.Clear();
-                Console.WriteLine(activePlayer.name + "s current scores are:");
+                Console.WriteLine(activePlayer.Name + "s current scores are:");
                 PrintScoreboard(activePlayer);
                 Console.ReadKey();
 
 
 
-                playerTurn = (playerTurn == players.Length - 1) ? 0 : playerTurn + 1; //Change playerturn
-                if (playerTurn == 0 && activePlayer.isDone()) {
+                playerTurn = (playerTurn == players.Length - 1) ? 0 : playerTurn + 1; //Change player turn
+                if (playerTurn == 0 && activePlayer.HasFullScoreboard()) {
                     gameOver = true;
                 }
 
             }
 
 
-            //Handle Gameover
+            GameOver();
+            Console.ReadKey();
+        }
+
+        private static void GameOver() {
+            //Handle Game over
             foreach (Player player in players) {
-                Console.WriteLine(player.name + "s scores:");
+                Console.WriteLine(player.Name + "s scores:");
                 PrintScoreboard(player);
                 Console.WriteLine("");
             }
@@ -181,45 +171,44 @@ namespace Yatzy {
             winners[0] = players[0];
             int maxScore = 0;
             foreach (Player player in players) {
-                int playerScore = player.getTotalScore();
-                if (playerScore > winners[0].getTotalScore()) {
+                int playerScore = player.GetTotalScore();
+                if (playerScore > winners[0].GetTotalScore()) {
                     winners[0] = player;
                     winnerCount = 1;
                     maxScore = playerScore;
-
                 }
-                else if (playerScore == winners[0].getTotalScore()) {
+                else if (playerScore == winners[0].GetTotalScore()) {
                     winners[winnerCount] = player;
                     winnerCount++;
                 }
-                Console.WriteLine(player.name + ": " + player.getTotalScore());
+
+                Console.WriteLine(player.Name + ": " + player.GetTotalScore());
             }
 
             if (winnerCount == 1) {
-                Console.WriteLine("The winner is: " + winners[0].name);
+                Console.WriteLine("The winner is: " + winners[0].Name);
             }
             else {
                 Console.WriteLine("It's a tie between: ");
                 for (int i = 0; i < winnerCount; i++) {
-                    Console.WriteLine(winners[i].name);
-
+                    Console.WriteLine(winners[i].Name);
                 }
             }
+
             Console.WriteLine("Congratulations!");
-            Console.ReadKey();
         }
 
-        private static int[] lockAndRoll(Player activePlayer) {
+        private static int[] LockAndRoll(Player activePlayer) {
             int[] lockedDice = new int[5];
             int lockedCount = 0;
-            int rerolls = 2;
+            int reRolls = 2;
             while (lockedCount < 5) {
 
                 //Rolls the the remaining dice
                 int[] liveDice = RollDice(5 - lockedCount);
 
                 //If there are no rerolls left - exit the while loop.
-                if (rerolls == 0) {
+                if (reRolls == 0) {
                     foreach (int num in liveDice) {
                         lockedDice[lockedCount] = num;
                         lockedCount++;
@@ -228,7 +217,7 @@ namespace Yatzy {
                 }
 
                 //Write out the locked and newly rolled dice
-                Console.WriteLine(activePlayer.name + " has " + rerolls + " rerolls remaining");
+                Console.WriteLine(activePlayer.Name + " has " + reRolls + " rerolls remaining");
                 Console.WriteLine("");
                 if (lockedCount > 0) {
                     for (int i = 0; i < lockedCount; i++)
@@ -243,36 +232,43 @@ namespace Yatzy {
                 Console.WriteLine("Which dice do you want to lock? Write the corresponding letters");
                 string lockInput = Console.ReadLine();
                 for (int i = 0; i < liveDice.Length; i++) {
-                    if (lockInput.Contains(letters[i])) {
-                        lockedDice[lockedCount] = liveDice[i];
-                        lockedCount++;
-                    }
+                    if (!lockInput.Contains(letters[i])) continue;
+                    lockedDice[lockedCount] = liveDice[i];
+                    lockedCount++;
                 }
 
                 Console.Clear();
-                //Console.WriteLine("");
-                rerolls--;
+                reRolls--;
             }
+            Array.Sort(lockedDice);
+            Console.WriteLine("Your final dice are:");
+            foreach (int val in lockedDice) {
+                Console.WriteLine("X : " + val);
+            }
+
+            Console.WriteLine("");
+
             return lockedDice;
         }
 
         static void PrintScoreboard(Player player) {
-            for (int i = 0; i < player.scoreboard.Length; i++) {
-                Score score = player.scoreboard[i];
+            Console.WriteLine($"{player.Name}s current scores are:");
+            for (int i = 0; i < player.Scoreboard.Length; i++) {
+                Category category = player.Scoreboard[i];
                 string line = letters[i] + " [";
-                if (!score.isScored) line += ("  ");
+                if (!category.IsScored) line += ("  ");
                 else {
-                    if (score.val < 10)
+                    if (category.Val < 10)
                         line += " ";
-                    line += score.val.ToString();
+                    line += category.Val.ToString();
                 }
-                line += "] " + score.name;
+                line += "] " + category.Name;
                 Console.WriteLine(line);
                 if (i == 5) Console.WriteLine("");
             }
         }
 
-        static int[] RollDice(int maxVal) {
+        private static int[] RollDice(int maxVal) {
             Random rnd = new Random();
             int[] values = new int[maxVal];
             for (int i = 0; i < maxVal; i++) {
@@ -282,22 +278,17 @@ namespace Yatzy {
         }
 
 
-        static Player[] SetupPlayers() {
+        private static Player[] SetupPlayers() {
             //Real
             Console.WriteLine("How many players?");
             int playerCount = int.Parse(Console.ReadLine());
             Player[] players = new Player[playerCount];
-            Console.WriteLine(playerCount);
-            Console.ReadKey();
             for (int i = 0; i < playerCount; i++) {
                 Console.WriteLine("What is the name of player " + (i + 1) + "?");
                 string name = Console.ReadLine();
                 players[i] = new Player(name);
             }
             return players;
-
-            ////Debugtests
-            //return new Player[] { new Player("Struten"), new Player("Braxen") };
         }
 
     }

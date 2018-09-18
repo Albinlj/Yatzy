@@ -1,57 +1,42 @@
-﻿using System;
-using System.Linq;
+﻿public class Player {
+    public string Name { get; }
+    public int Id { get; }
 
-
-public class Player {
-    public string name;
-    public int id;
-    public Score[] scoreboard = new Score[] {
-        new Score ("Ones"),
-        new Score ("Twos"),
-        new Score ("Threes"),
-        new Score ("Fours"),
-        new Score ("Fives"),
-        new Score ("Sixes"),
-        new Score ("OnePair"),
-        new Score ("TwoPair"),
-        new Score ("Three of a kind"),
-        new Score ("Four o a kind"),
-        new Score ("Small straight"),
-        new Score ("Large straight"),
-        new Score ("Full house"),
-        new Score ("Chance"),
-        new Score ("Yatzy")
+    public Category[] Scoreboard { get; } = {
+        new Category("Ones"),
+        new Category("Twos"),
+        new Category("Threes"),
+        new Category("Fours"),
+        new Category("Fives"),
+        new Category("Sixes"),
+        new Category("OnePair"),
+        new Category("TwoPair"),
+        new Category("Three of a kind"),
+        new Category("Four o a kind"),
+        new Category("Small straight"),
+        new Category("Large straight"),
+        new Category("Full house"),
+        new Category("Chance"),
+        new Category("Yatzy")
     };
 
-    public Player(string _name) {
-        name = _name;
+    public Player(string name) {
+        Name = name;
     }
 
-    public bool isDone() {
-        foreach (Score score in scoreboard) {
-            if (!score.isScored) return false;
+    public bool HasFullScoreboard() {
+        foreach (Category score in Scoreboard) {
+            if (!score.IsScored) return false;
         }
         return true;
     }
 
-    public int getTotalScore() {
+    public int GetTotalScore() {
         int total = 0;
-        foreach (Score score in scoreboard) {
-            total += score.val;
+        foreach (Category score in Scoreboard) {
+            total += score.Val;
         }
         return total;
     }
 
-}
-
-public class Score {
-    public string name;
-    public int val;
-    public bool isScored;
-
-    public Score(string _name) {
-        name = _name;
-        val = 0;
-        isScored = false;
-    }
 }
